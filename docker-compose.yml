@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+
+  couchbase-server:
+    build:
+      context: ./couchbase-server
+      dockerfile: Dockerfile
+    container_name: couchbase
+    ports:
+      - 8091-8094:8091-8094
+      - 11210:11210
+    environment:
+      - COUCHBASE_ADMINISTRATOR_USERNAME=Administrator
+      - COUCHBASE_ADMINISTRATOR_PASSWORD=password
+      - COUCHBASE_RBAC_USERNAME=admin
+      - COUCHBASE_RBAC_PASSWORD=123456
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://Administrator:password@localhost:8091/pools/"]
+      interval: 40s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    networks:
+      - db_network
+
+  todo-api:
+    image: ieskioglu/todo-api:v1
+    container_name: todo-api
+    ports:
+      - 8080:8080
+    networks:
+      - db_network
+    depends_on:
+      couchbase-server:
+        condition: service_healthy
+    
+
+networks:
+  db_network:

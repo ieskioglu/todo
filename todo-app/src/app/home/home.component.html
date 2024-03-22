@@ -1,0 +1,239 @@
+<nz-layout class="app-layout">
+  <nz-sider
+    class="menu-sidebar"
+    nzCollapsible
+    nzWidth="256px"
+    nzBreakpoint="md"
+    [(nzCollapsed)]="isCollapsed"
+    [nzTrigger]="null"
+  >
+    <ul nz-menu nzMode="inline" [nzTheme]="'dark'">
+      <ng-container
+        *ngTemplateOutlet="menuTpl; context: { $implicit: todoLists }"
+      ></ng-container>
+      <ng-template #menuTpl let-menus>
+        @for (todoList of todoLists; track todoList) {
+        <li
+          nz-menu-item
+          [nzPaddingLeft]="24"
+          [nzSelected]="todoList.selected"
+          [routerLink]="['/home']"
+          [queryParams]="{ id: todoList.id }"
+        >
+          <span nz-icon nzType="bars"></span>
+          <span>{{ todoList.title }}</span>
+        </li>
+        }
+      </ng-template>
+    </ul>
+    <a
+      style="
+        position: absolute;
+        bottom: 0;
+        padding-left: 24px;
+        width: 100%;
+        color: rgba(255, 255, 255, 0.65);
+        line-height: 40px;
+      "
+      (click)="newList()"
+    >
+      <span nz-icon nzType="plus"></span>
+      <span style="margin-left: 10px">Yeni Liste</span>
+    </a>
+  </nz-sider>
+  <nz-layout>
+    <nz-header>
+      <div class="app-header">
+        <span class="header-trigger" (click)="isCollapsed = !isCollapsed">
+          <span
+            class="trigger"
+            nz-icon
+            [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"
+          ></span>
+        </span>
+        <div class="header-tool">
+          <nz-avatar
+            nzIcon="user"
+            [nzShape]="'square'"
+            nz-dropdown
+            [nzDropdownMenu]="menu"
+            nzPlacement="bottomRight"
+            [nzTrigger]="'click'"
+            style="cursor: pointer"
+          ></nz-avatar>
+          <nz-dropdown-menu #menu="nzDropdownMenu">
+            <ul nz-menu nzSelectable>
+              <li nz-menu-item (click)="logout()" style="cursor: pointer">
+                Çıkış
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </div>
+      </div>
+    </nz-header>
+    <nz-content>
+      <div class="inner-content">
+        <ng-container *ngIf="selectedTodoList.id">
+          <nz-page-header nzBackIcon [nzGhost]="false">
+            <nz-page-header-title>{{
+              selectedTodoList.title
+            }}</nz-page-header-title>
+            <nz-page-header-extra>
+              <nz-space>
+                <button *nzSpaceItem nz-button (click)="editList()">
+                  Düzenle
+                </button>
+                <button
+                  *nzSpaceItem
+                  nz-button
+                  nzDanger
+                  nz-popconfirm
+                  nzPopconfirmTitle="Emin misiniz?"
+                  nzOkText="Evet"
+                  nzCancelText="Hayır"
+                  (nzOnConfirm)="deleteList(selectedTodoList)"
+                >
+                  Sil
+                </button>
+              </nz-space>
+            </nz-page-header-extra>
+          </nz-page-header>
+          <div>
+            <nz-input-group [nzPrefix]="prefixTemplateUser">
+              <input
+                type="text"
+                nz-input
+                placeholder="Görev ekle"
+                [(ngModel)]="todoItemTitle"
+                (keydown.enter)="onKeyDown($event)"
+              />
+            </nz-input-group>
+            <ng-template #prefixTemplateUser
+              ><span nz-icon nzType="plus"></span
+            ></ng-template>
+          </div>
+          <nz-list nzBordered>
+            @for (item of todoItems; track item) {
+            <nz-list-item (contextmenu)="contextMenu($event, menu)">
+              <nz-list-item-meta>
+                <nz-list-item-meta-title>
+                  {{ item.title }}
+                </nz-list-item-meta-title>
+              </nz-list-item-meta>
+              <ul nz-list-item-actions>
+                <nz-list-item-action>
+                  <a
+                    (click)="changeCompletedStatus(item)"
+                    nz-tooltip
+                    nzTooltipTitle="Görevi tamamlandı veya tamamlanmadı olarak değiştirir"
+                    nzTooltipPlacement="top"
+                    ><span
+                      style="font-size: 20px"
+                      nz-icon
+                      nzType="check-circle"
+                      [nzTheme]="item.completed ? 'fill' : 'outline'"
+                    ></span
+                  ></a>
+                </nz-list-item-action>
+                <nz-list-item-action>
+                  <a
+                    (click)="changePriorityStatus(item)"
+                    nz-tooltip
+                    nzTooltipTitle="Görevi önemli veya önemli olmayan olarak değiştirir"
+                    nzTooltipPlacement="top"
+                    ><span
+                      style="font-size: 20px"
+                      nz-icon
+                      nzType="star"
+                      [nzTheme]="item.priority ? 'fill' : 'outline'"
+                    ></span
+                  ></a>
+                </nz-list-item-action>
+              </ul>
+            </nz-list-item>
+            <nz-dropdown-menu #menu="nzDropdownMenu">
+              <ul nz-menu>
+                <li nz-menu-item (click)="edit(item)">
+                  <span nz-icon nzType="edit" nzTheme="outline"></span>
+                  Düzenle
+                </li>
+                <li nz-menu-item (click)="delete(item)">
+                  <span
+                    nz-icon
+                    nzType="delete"
+                    nzTheme="outline"
+                    nzDanger
+                  ></span
+                  >Sil
+                </li>
+              </ul>
+            </nz-dropdown-menu>
+            }
+          </nz-list>
+        </ng-container>
+      </div>
+    </nz-content>
+  </nz-layout>
+</nz-layout>
+
+<nz-modal
+  [(nzVisible)]="isVisible"
+  nzTitle="Yeni Liste"
+  (nzOnCancel)="handleCancel()"
+  (nzOnOk)="handleOk()"
+>
+  <ng-container *nzModalContent>
+    <form nz-form [formGroup]="validateForm">
+      <nz-form-item>
+        <nz-form-label nzRequired>Adı</nz-form-label>
+        <nz-form-control
+          [nzSpan]="24"
+          nzHasFeedback
+          nzErrorTip="Please input title name!"
+        >
+          <input nz-input type="text" formControlName="title" />
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-modal>
+
+<nz-drawer
+  [nzClosable]="true"
+  [nzVisible]="selectedItem.id != null"
+  nzPlacement="right"
+  (nzOnClose)="close()"
+>
+  <ng-container *nzDrawerContent>
+    <form nz-form [formGroup]="validateItemForm">
+      <nz-form-item>
+        <nz-form-control [nzSpan]="24">
+          <input nz-input type="text" formControlName="title" />
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-control [nzXs]="24">
+          <nz-date-picker
+            nzPlaceHolder="Hatırlatıcı"
+            formControlName="reminder"
+          ></nz-date-picker>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-control [nzSpan]="24">
+          <textarea
+            formControlName="notes"
+            nz-input
+            rows="3"
+            placeholder="Notlar"
+          ></textarea>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-control [nzOffset]="7" [nzSpan]="12">
+          <button nz-button nzType="primary"  (click)="updateItem()">Kaydet</button>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </ng-container>
+</nz-drawer>
